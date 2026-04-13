@@ -65,9 +65,9 @@ export async function PUT(req: Request, { params }: Params) {
 
     const data = parsed.data;
 
-    const existing = await db.product.findFirst({
+   const existing = await db.product.findFirst({
       where: {
-        slug: data.slug,
+        name: data.name,
         NOT: { id },
       },
     });
@@ -80,19 +80,18 @@ export async function PUT(req: Request, { params }: Params) {
     }
 
     const updated = await db.product.update({
-      where: { id },
-      data: {
-        name: data.name,
-        slug: data.slug,
-        category: data.category,
-        subcategory: data.subcategory ?? null,
-        team: data.team ?? null,
-        price: data.price,
-        oldPrice: data.oldPrice ?? null,
-        mainImage: data.mainImage,
-        stock: data.stock ?? 0,
-      },
-    });
+  where: { id },
+  data: {
+    name: data.name,
+    category: data.category,
+    subcategory: data.subcategory ?? null,
+    team: data.team ?? null,
+    price: data.price,
+    oldPrice: data.oldPrice ?? null,
+    mainImage: data.mainImage,
+    stock: data.stock ?? 0,
+  },
+});
 
     return NextResponse.json({
       message: "Product updated",
