@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 /**
- * Signup Schema
+ * =========================
+ * SIGNUP SCHEMA
+ * =========================
  */
 export const signupSchema = z
   .object({
@@ -19,7 +21,9 @@ export const signupSchema = z
   });
 
 /**
- * Login Schema
+ * =========================
+ * LOGIN SCHEMA
+ * =========================
  */
 export const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -27,7 +31,9 @@ export const loginSchema = z.object({
 });
 
 /**
- * Product Schema (FIXED for your Zod version)
+ * =========================
+ * PRODUCT SCHEMA (FIXED)
+ * =========================
  */
 export const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -40,16 +46,18 @@ export const productSchema = z.object({
 
   team: z.string().optional(),
 
-  /**
-   * IMPORTANT FIX:
-   * - removed required_error (NOT supported in your Zod version)
-   * - using coerce for form input safety
-   */
-  price: z.coerce.number().min(1, "Price is required"),
+  // ✅ FIXED: safe number handling for forms
+  price: z.coerce
+    .number()
+    .min(1, "Price is required"),
 
-  oldPrice: z.coerce.number().optional(),
+  oldPrice: z.coerce
+    .number()
+    .optional(),
 
   mainImage: z.string().min(1, "Main image is required"),
 
-  stock: z.coerce.number().optional(),
+  stock: z.coerce
+    .number()
+    .optional(),
 });
