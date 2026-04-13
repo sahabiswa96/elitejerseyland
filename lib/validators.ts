@@ -46,6 +46,7 @@ export const productSchema = z.object({
 
   team: z.string().optional(),
 
+  // numeric fields (form safe)
   price: z.coerce.number().min(1, "Price is required"),
 
   oldPrice: z.coerce.number().optional(),
