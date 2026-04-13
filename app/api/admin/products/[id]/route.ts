@@ -7,7 +7,10 @@ type Params = {
   params: Promise<{ id: string }>;
 };
 
-// GET single product
+
+/**
+ * GET SINGLE PRODUCT
+ */
 export async function GET(_: Request, { params }: Params) {
   try {
     await requireAdmin();
@@ -32,6 +35,7 @@ export async function GET(_: Request, { params }: Params) {
         oldPrice: product.oldPrice ? Number(product.oldPrice) : null,
       },
     });
+
   } catch (error) {
     console.error("ADMIN_GET_PRODUCT_ERROR", error);
 
@@ -43,7 +47,9 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 
-// UPDATE product
+/**
+ * UPDATE PRODUCT
+ */
 export async function PUT(req: Request, { params }: Params) {
   try {
     await requireAdmin();
@@ -65,7 +71,8 @@ export async function PUT(req: Request, { params }: Params) {
 
     const data = parsed.data;
 
-   const existing = await db.product.findFirst({
+    // check duplicate name (instead of slug)
+    const existing = await db.product.findFirst({
       where: {
         name: data.name,
         NOT: { id },
@@ -74,24 +81,25 @@ export async function PUT(req: Request, { params }: Params) {
 
     if (existing) {
       return NextResponse.json(
-        { message: "Slug already used by another product" },
+        { message: "Another product with same name exists" },
         { status: 409 }
       );
     }
 
     const updated = await db.product.update({
-  where: { id },
-  data: {
-    name: data.name,
-    category: data.category,
-    subcategory: data.subcategory ?? null,
-    team: data.team ?? null,
-    price: data.price,
-    oldPrice: data.oldPrice ?? null,
-    mainImage: data.mainImage,
-    stock: data.stock ?? 0,
-  },
-});
+      where: { id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        category: data.category,
+        subcategory: data.subcategory ?? null,
+        team: data.team ?? null,
+        price: data.price,
+        oldPrice: data.oldPrice ?? null,
+        mainImage: data.mainImage,
+        stock: data.stock ?? 0,
+      },
+    });
 
     return NextResponse.json({
       message: "Product updated",
@@ -101,6 +109,7 @@ export async function PUT(req: Request, { params }: Params) {
         oldPrice: updated.oldPrice ? Number(updated.oldPrice) : null,
       },
     });
+
   } catch (error) {
     console.error("ADMIN_UPDATE_PRODUCT_ERROR", error);
 
@@ -112,7 +121,9 @@ export async function PUT(req: Request, { params }: Params) {
 }
 
 
-// DELETE product
+/**
+ * DELETE PRODUCT
+ */
 export async function DELETE(_: Request, { params }: Params) {
   try {
     await requireAdmin();
@@ -124,8 +135,9 @@ export async function DELETE(_: Request, { params }: Params) {
     });
 
     return NextResponse.json({
-      message: "Product deleted",
+      message: "Product deleted successfully",
     });
+
   } catch (error) {
     console.error("ADMIN_DELETE_PRODUCT_ERROR", error);
 
