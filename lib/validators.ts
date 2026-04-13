@@ -46,7 +46,6 @@ export const productSchema = z.object({
 
   team: z.string().optional(),
 
-  // FIXED: numeric fields (no duplicates)
   price: z.coerce.number().min(1, "Price is required"),
 
   oldPrice: z.coerce.number().optional(),
