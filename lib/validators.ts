@@ -27,7 +27,7 @@ export const loginSchema = z.object({
 });
 
 /**
- * Product Schema (Matches Prisma schema)
+ * Product Schema (FIXED for your Zod version)
  */
 export const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -40,13 +40,16 @@ export const productSchema = z.object({
 
   team: z.string().optional(),
 
-  price: z.number({
-    required_error: "Price is required",
-  }),
+  /**
+   * IMPORTANT FIX:
+   * - removed required_error (NOT supported in your Zod version)
+   * - using coerce for form input safety
+   */
+  price: z.coerce.number().min(1, "Price is required"),
 
-  oldPrice: z.number().optional(),
+  oldPrice: z.coerce.number().optional(),
 
   mainImage: z.string().min(1, "Main image is required"),
 
-  stock: z.number().optional(),
+  stock: z.coerce.number().optional(),
 });
