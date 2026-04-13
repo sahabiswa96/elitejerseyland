@@ -8,7 +8,6 @@ export async function GET() {
     await requireAdmin();
 
     const products = await db.product.findMany({
-      include: { sizes: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -17,12 +16,15 @@ export async function GET() {
         ...product,
         price: Number(product.price),
         oldPrice: product.oldPrice ? Number(product.oldPrice) : null,
-        sizes: product.sizes.map((s) => s.size),
       })),
     });
   } catch (error) {
     console.error("ADMIN_GET_PRODUCTS_ERROR", error);
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    return NextResponse.json(
+      { message: "Unauthorized" },
+      { status: 401 }
+    );
   }
 }
 
@@ -35,7 +37,10 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { message: "Validation failed", errors: parsed.error.flatten() },
+        {
+          message: "Validation failed",
+          errors: parsed.error.flatten(),
+        },
         { status: 400 }
       );
     }
@@ -57,27 +62,14 @@ export async function POST(req: Request) {
       data: {
         name: data.name,
         slug: data.slug,
-        brand: data.brand ?? null,
-        team: data.team ?? null,
-        quality: data.quality ?? null,
         category: data.category,
         subcategory: data.subcategory ?? null,
+        team: data.team ?? null,
         price: data.price,
         oldPrice: data.oldPrice ?? null,
-        stockStatus: data.stockStatus ?? null,
-        shortDescription: data.shortDescription ?? null,
-        description: data.description ?? null,
         mainImage: data.mainImage,
-        galleryImage1: data.galleryImage1 ?? null,
-        galleryImage2: data.galleryImage2 ?? null,
-        galleryImage3: data.galleryImage3 ?? null,
-        galleryImage4: data.galleryImage4 ?? null,
-        stock: data.stock,
-        sizes: {
-          create: (data.sizes || []).map((size) => ({ size })),
-        },
+        stock: data.stock ?? 0,
       },
-      include: { sizes: true },
     });
 
     return NextResponse.json({
@@ -86,11 +78,14 @@ export async function POST(req: Request) {
         ...created,
         price: Number(created.price),
         oldPrice: created.oldPrice ? Number(created.oldPrice) : null,
-        sizes: created.sizes.map((s) => s.size),
       },
     });
   } catch (error) {
     console.error("ADMIN_CREATE_PRODUCT_ERROR", error);
-    return NextResponse.json({ message: "Unauthorized or server error" }, { status: 500 });
+
+    return NextResponse.json(
+      { message: "Unauthorized or server error" },
+      { status: 500 }
+    );
   }
 }
