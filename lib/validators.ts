@@ -19,17 +19,3 @@ export const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
   password: z.string().min(1, "Password is required"),
 });
-
-
-// ✅ NEW: Product Schema (FIX FOR YOUR BUILD ERROR)
-export const productSchema = z.object({
-  name: z.string().min(2, "Product name is required"),
-  slug: z.string().min(2, "Slug is required"),
-  category: z.string().min(2, "Category is required"),
-  subcategory: z.string().optional(),
-  team: z.string().optional(),
-  price: z.number().min(1, "Price is required"),
-  oldPrice: z.number().optional(),
-  mainImage: z.string().min(1, "Main image is required"),
-  stock: z.number().int().nonnegative("Stock must be 0 or more"),
-});

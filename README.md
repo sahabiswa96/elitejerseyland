@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elite Jersey Land
+
+Elite Jersey Land is a modern Next.js-based web application for managing and showcasing premium sports jerseys with fast performance and scalable architecture.
+
+## Tech Stack
+
+- Next.js (App Router)
+- PostgreSQL Database
+- Tailwind CSS
+- JWT Authentication
+- Nodemailer (Contact Email Support)
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+DATABASE_URL="postgresql://postgres:12345@localhost:5433/elite_jersey_land"
+JWT_SECRET="elite_secret_key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+CONTACT_TO_EMAIL="elitejerseyland@gmail.com"
+SMTP_FROM_EMAIL="elitejerseyland@gmail.com"
+SMTP_USER="elitejerseyland@gmail.com"
+SMTP_PASS="your_app_password_here"
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
 
-```bash
+npm install
+
+Run development server:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database Setup
 
-## Learn More
+Make sure PostgreSQL is running on:
 
-To learn more about Next.js, take a look at the following resources:
+localhost:5433
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Database name:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+elite_jersey_land
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Recommended deployment platform:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel
+
+Steps:
+
+1. Push code to GitHub
+2. Import repository into Vercel
+3. Add environment variables
+4. Deploy
+
+## Author
+
+Developed by Biswajit Saha
