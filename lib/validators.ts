@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/**
+ * Signup Schema
+ */
 export const signupSchema = z
   .object({
     firstName: z.string().min(2, "First name is required"),
@@ -15,7 +18,37 @@ export const signupSchema = z
     message: "Passwords do not match",
   });
 
+/**
+ * Login Schema
+ */
 export const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
   password: z.string().min(1, "Password is required"),
+});
+
+/**
+ * Product Schema (Admin Product API uses this)
+ */
+export const productSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+
+  description: z
+    .string()
+    .min(5, "Description must be at least 5 characters")
+    .optional(),
+
+  price: z.number({
+    required_error: "Price is required",
+  }).min(0, "Price must be greater than or equal to 0"),
+
+  image: z.string().optional(),
+
+  category: z.string().optional(),
+
+  stock: z
+    .number({
+      invalid_type_error: "Stock must be a number",
+    })
+    .min(0, "Stock cannot be negative")
+    .optional(),
 });
