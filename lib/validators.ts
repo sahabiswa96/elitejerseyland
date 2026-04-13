@@ -27,28 +27,26 @@ export const loginSchema = z.object({
 });
 
 /**
- * Product Schema (Admin Product API uses this)
+ * Product Schema (Matches Prisma schema)
  */
 export const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
 
-  description: z
-    .string()
-    .min(5, "Description must be at least 5 characters")
-    .optional(),
+  slug: z.string().min(1, "Slug is required"),
+
+  category: z.string().min(1, "Category is required"),
+
+  subcategory: z.string().optional(),
+
+  team: z.string().optional(),
 
   price: z.number({
     required_error: "Price is required",
-  }).min(0, "Price must be greater than or equal to 0"),
+  }),
 
-  image: z.string().optional(),
+  oldPrice: z.number().optional(),
 
-  category: z.string().optional(),
+  mainImage: z.string().min(1, "Main image is required"),
 
-  stock: z
-    .number({
-      invalid_type_error: "Stock must be a number",
-    })
-    .min(0, "Stock cannot be negative")
-    .optional(),
+  stock: z.number().optional(),
 });
