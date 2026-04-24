@@ -1,9 +1,9 @@
 "use server";
 
-import prisma  from "@/lib/prisma"; // Make sure you have a prisma client instance here
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function addProduct(formData: FormData) {
+export async function addProduct(formData: FormData): Promise<void> {
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
   const brand = formData.get("brand") as string;
@@ -11,22 +11,26 @@ export async function addProduct(formData: FormData) {
   const quality = formData.get("quality") as string;
   const category = formData.get("category") as string;
   const subcategory = formData.get("subcategory") as string;
+
   const price = parseFloat(formData.get("price") as string);
+
   const oldPrice = formData.get("oldPrice")
     ? parseFloat(formData.get("oldPrice") as string)
     : null;
+
   const shortDescription = formData.get("shortDescription") as string;
   const fullDescription = formData.get("fullDescription") as string;
-  
-  // Sizes come from the hidden input as a JSON string
+
+  // Sizes JSON string → array
   const sizesJson = formData.get("sizes") as string;
   const sizes = sizesJson ? JSON.parse(sizesJson) : [];
 
-  // Handle Main Image
+  // Main image
   const mainImageFile = formData.get("mainImage") as File;
-  const mainImage = mainImageFile ? mainImageFile.name : "";
+  const mainImage =
+    mainImageFile && mainImageFile.size > 0 ? mainImageFile.name : "";
 
-  // Handle Gallery Images
+  // Gallery images
   const galleryFiles = [
     formData.get("gallery1") as File,
     formData.get("gallery2") as File,
@@ -34,16 +38,9 @@ export async function addProduct(formData: FormData) {
     formData.get("gallery4") as File,
   ];
 
-  // Filter out undefined or empty files and just get names
   const galleryImages = galleryFiles
     .filter((file) => file && file.size > 0)
     .map((file) => file.name);
-
-  // --- IMPORTANT: REAL IMAGE UPLOAD LOGIC NEEDED HERE ---
-  // Currently, we are only saving the filename.
-  // In a real app, you would use fs.writeFileSync or a cloud service here 
-  // to move the file from 'mainImageFile' to your 'public' folder.
-  // ------------------------------------------------------
 
   try {
     await prisma.product.create({
@@ -59,21 +56,20 @@ export async function addProduct(formData: FormData) {
         oldPrice,
         shortDescription,
         fullDescription,
-        sizes: JSON.stringify(sizes), // Store array as JSON string in DB
+        sizes: JSON.stringify(sizes),
         mainImage,
-        galleryImages: JSON.stringify(galleryImages), // Store array as JSON string
+        galleryImages: JSON.stringify(galleryImages),
         isPublished: true,
-        stock: 100, // Default stock
+        stock: 100,
       },
     });
 
-    // Clear the cache for the catalog page so new products appear immediately
+    // refresh catalog + admin panel
     revalidatePath("/catalog");
     revalidatePath("/admin/products");
 
-    return { success: true };
   } catch (error) {
     console.error("Error adding product:", error);
-    return { success: false, error: "Failed to add product" };
+    throw new Error("Failed to add product");
   }
 }
