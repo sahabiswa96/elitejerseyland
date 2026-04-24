@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma"; // Make sure you have a prisma client instance here
+import prisma  from "@/lib/prisma"; // Make sure you have a prisma client instance here
 import { revalidatePath } from "next/cache";
 
 export async function addProduct(formData: FormData) {
