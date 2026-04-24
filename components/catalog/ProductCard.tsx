@@ -1,5 +1,3 @@
-// elite-jersey-land/components/catalog/ProductCard.tsx
-
 "use client";
 
 import Link from "next/link";
@@ -26,14 +24,15 @@ type ProductCardProps = {
 export default function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="group overflow-hidden rounded-[24px] border border-[rgba(201,149,0,0.14)] bg-white shadow-[0_12px_30px_rgba(201,149,0,0.05)] transition duration-300 hover:-translate-y-1 hover:border-[rgba(201,149,0,0.28)]">
-            <Link href={`/catalog/${product.slug}`} className="block overflow-hidden xl:pointer-events-none">
+      
+      {/* Image Wrapper - Clickable on all devices */}
+      <Link href={`/catalog/${product.slug}`} className="block overflow-hidden">
         <div className="relative overflow-hidden bg-[#fffaf0]">
           <img
             src={product.mainImage || "/images/default-product.webp"}
             alt={product.name}
             className="aspect-[4/5] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
-
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(43,33,18,0.20)] via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
         </div>
       </Link>

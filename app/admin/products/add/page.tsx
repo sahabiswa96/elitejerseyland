@@ -2,16 +2,37 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { addProduct } from "../actions";
 
 const sizeOptions = ["S", "M", "L", "XL", "2XL", "3XL"];
 
 export default function AddProductPage() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["M", "L"]);
+  const [slug, setSlug] = useState(""); // State to hold the auto-generated slug
+  
+  // State for image filenames just for UI feedback
   const [mainImageName, setMainImageName] = useState("");
   const [gallery1Name, setGallery1Name] = useState("");
   const [gallery2Name, setGallery2Name] = useState("");
   const [gallery3Name, setGallery3Name] = useState("");
   const [gallery4Name, setGallery4Name] = useState("");
+
+  // Function to create a slug from a string
+  const createSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "") // Remove special characters
+      .replace(/[\s_-]+/g, "-")  // Replace spaces and underscores with hyphens
+      .replace(/^-+|-+$/g, "");  // Remove leading/trailing hyphens
+  };
+
+  // Handle Name Change -> Auto Generate Slug
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const generatedSlug = createSlug(name);
+    setSlug(generatedSlug);
+  };
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -46,7 +67,15 @@ export default function AddProductPage() {
       </div>
 
       <div className="rounded-[24px] border border-[rgba(201,149,0,0.14)] bg-white p-5 shadow-[0_12px_28px_rgba(201,149,0,0.05)] md:p-6">
-        <form className="space-y-6">
+        <form action={addProduct} className="space-y-6">
+          
+          {/* Hidden input to pass selected sizes array to server */}
+          <input 
+            type="hidden" 
+            name="sizes" 
+            value={JSON.stringify(selectedSizes)} 
+          />
+
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#2b2112]">
@@ -54,8 +83,11 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="name" 
                 placeholder="Enter product name"
                 className="input-premium h-12"
+                required
+                onChange={handleNameChange} // Added this to auto-generate slug
               />
             </div>
 
@@ -65,8 +97,12 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="slug"
+                value={slug} // Controlled by state
                 placeholder="enter-product-slug"
                 className="input-premium h-12"
+                required
+                readOnly // Prevents manual editing, keeps URL clean
               />
             </div>
           </div>
@@ -78,6 +114,7 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="brand"
                 defaultValue="Elite Jersey Land"
                 className="input-premium h-12"
               />
@@ -89,6 +126,7 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="team"
                 placeholder="Argentina / Barcelona / Brazil"
                 className="input-premium h-12"
               />
@@ -100,6 +138,7 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="quality"
                 defaultValue="Premium Quality"
                 className="input-premium h-12"
               />
@@ -111,12 +150,12 @@ export default function AddProductPage() {
               <label className="mb-2 block text-sm font-medium text-[#2b2112]">
                 Category
               </label>
-              <select className="input-premium h-12">
-                <option>National Teams</option>
-                <option>Clubs</option>
-                <option>Special Edition</option>
-                <option>Kids</option>
-                <option>Full Sleeve</option>
+              <select name="category" className="input-premium h-12">
+                <option value="National Teams">National Teams</option>
+                <option value="Clubs">Clubs</option>
+                <option value="Special Edition">Special Edition</option>
+                <option value="Kids">Kids</option>
+                <option value="Full Sleeve">Full Sleeve</option>
               </select>
             </div>
 
@@ -124,9 +163,9 @@ export default function AddProductPage() {
               <label className="mb-2 block text-sm font-medium text-[#2b2112]">
                 Subcategory
               </label>
-              <select className="input-premium h-12">
-                <option>Half Sleeve</option>
-                <option>Full Sleeve</option>
+              <select name="subcategory" className="input-premium h-12">
+                <option value="Half Sleeve">Half Sleeve</option>
+                <option value="Full Sleeve">Full Sleeve</option>
               </select>
             </div>
 
@@ -136,8 +175,10 @@ export default function AddProductPage() {
               </label>
               <input
                 type="number"
+                name="price"
                 placeholder="999"
                 className="input-premium h-12"
+                required
               />
             </div>
 
@@ -147,6 +188,7 @@ export default function AddProductPage() {
               </label>
               <input
                 type="number"
+                name="oldPrice"
                 placeholder="1299"
                 className="input-premium h-12"
               />
@@ -183,12 +225,11 @@ export default function AddProductPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#2b2112]">
-                Stock Status
+                Stock Status (Default Stock set to 100)
               </label>
-              <select className="input-premium h-12">
-                <option>In Stock</option>
-                <option>Out of Stock</option>
-              </select>
+              <div className="h-12 flex items-center text-sm text-gray-500">
+                In Stock
+              </div>
             </div>
 
             <div>
@@ -197,6 +238,7 @@ export default function AddProductPage() {
               </label>
               <input
                 type="text"
+                name="shortDescription"
                 placeholder="Short highlight about this product"
                 className="input-premium h-12"
               />
@@ -213,9 +255,7 @@ export default function AddProductPage() {
                 Main Image + Optional Gallery Images
               </h3>
               <p className="mt-2 text-sm leading-7 text-[#7a6641]">
-                Main image is required. Gallery Image 1 to 4 are optional. If
-                optional images are not added, frontend will show only the main
-                image.
+                Main image is required. Gallery Image 1 to 4 are optional.
               </p>
             </div>
 
@@ -226,6 +266,7 @@ export default function AddProductPage() {
                 </label>
                 <input
                   type="file"
+                  name="mainImage"
                   required
                   accept="image/*"
                   onChange={(e) =>
@@ -244,6 +285,7 @@ export default function AddProductPage() {
                 </label>
                 <input
                   type="file"
+                  name="gallery1"
                   accept="image/*"
                   onChange={(e) =>
                     setGallery1Name(e.target.files?.[0]?.name || "")
@@ -261,6 +303,7 @@ export default function AddProductPage() {
                 </label>
                 <input
                   type="file"
+                  name="gallery2"
                   accept="image/*"
                   onChange={(e) =>
                     setGallery2Name(e.target.files?.[0]?.name || "")
@@ -278,6 +321,7 @@ export default function AddProductPage() {
                 </label>
                 <input
                   type="file"
+                  name="gallery3"
                   accept="image/*"
                   onChange={(e) =>
                     setGallery3Name(e.target.files?.[0]?.name || "")
@@ -295,6 +339,7 @@ export default function AddProductPage() {
                 </label>
                 <input
                   type="file"
+                  name="gallery4"
                   accept="image/*"
                   onChange={(e) =>
                     setGallery4Name(e.target.files?.[0]?.name || "")
@@ -313,6 +358,7 @@ export default function AddProductPage() {
               Full Description
             </label>
             <textarea
+              name="fullDescription"
               placeholder="Write full product description"
               className="input-premium min-h-[120px] resize-none py-3"
             />

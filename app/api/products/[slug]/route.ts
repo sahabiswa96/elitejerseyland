@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import prisma from "@/lib/prisma";
 
-type RouteContext = {
-  params: Promise<{ slug: string }>;
-};
-
-export async function GET(_: Request, { params }: RouteContext) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   try {
     const { slug } = await params;
 
-    const product = await db.product.findUnique({
+    // 1. Find the specific product by slug
+    const product = await prisma.product.findUnique({
       where: { slug },
     });
 
@@ -17,12 +17,12 @@ export async function GET(_: Request, { params }: RouteContext) {
       return NextResponse.json({ message: "Product not found" }, { status: 404 });
     }
 
-    const relatedProducts = await db.product.findMany({
+    // 2. Find related products (Same category or team, excluding current product)
+    const relatedProducts = await prisma.product.findMany({
       where: {
         id: { not: product.id },
         OR: [
           { category: product.category },
-          ...(product.subcategory ? [{ subcategory: product.subcategory }] : []),
           ...(product.team ? [{ team: product.team }] : []),
         ],
       },
@@ -32,6 +32,7 @@ export async function GET(_: Request, { params }: RouteContext) {
       },
     });
 
+    // 3. Return JSON response
     return NextResponse.json({
       product: {
         ...product,

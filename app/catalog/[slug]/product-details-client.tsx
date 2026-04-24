@@ -1,5 +1,3 @@
-// elite-jersey-land/app/catalog/[slug]/product-details-client.tsx
-
 "use client";
 
 import Link from "next/link";
@@ -27,6 +25,7 @@ type ProductData = {
   subcategory?: string | null;
   team?: string | null;
   mainImage: string;
+  galleryImages: string | null;
   stock: number;
   createdAt: string;
   updatedAt: string;
@@ -45,17 +44,56 @@ export default function ProductDetailsClient({ data }: Props) {
   const router = useRouter();
   const { product, relatedProducts } = data;
 
-  const images = useMemo(
-    () => [product.mainImage || "/images/default-product.webp"].filter(Boolean),
-    [product.mainImage]
-  );
+  // State for authentication check
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // <-- NEW: Track user role
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const images = useMemo(() => {
+    let gallery: string[] = [];
+    try {
+      if (product.galleryImages) {
+        gallery = JSON.parse(product.galleryImages);
+      }
+    } catch (e) {
+      console.error("Failed to parse gallery images", e);
+    }
+    return [product.mainImage || "/images/default-product.webp", ...gallery].filter(Boolean);
+  }, [product.mainImage, product.galleryImages]);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [adding, setAdding] = useState(false);
-  const [buying, setBuying] = useState(false); // ⬅️ নতুন
+  const [buying, setBuying] = useState(false);
+
+  // Check if user is logged in and their role
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.user?.role || null); // <-- NEW: Save role (ADMIN / CUSTOMER)
+          setIsLoggedIn(data.user && data.user.role === "CUSTOMER");
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error("Auth check failed", error);
+        setIsLoggedIn(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     setSelectedImage(0);
@@ -77,44 +115,84 @@ export default function ProductDetailsClient({ data }: Props) {
     });
   };
 
-  async function handleAddToCart() {
-    try {
-      setAdding(true);
-
-      for (let i = 0; i < quantity; i++) {
-        await addToCart(product.id);
-      }
-
-      window.dispatchEvent(new Event("cart-updated"));
-      alert("Product added to cart");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to add to cart");
-    } finally {
-      setAdding(false);
+  // Check authentication before adding to cart
+  async function checkAuthAndProceed(action: () => Promise<void>) {
+    if (checkingAuth) {
+      return;
     }
+
+    // <-- NEW FIX: If user is Admin, show alert and don't redirect to login
+    if (userRole === "ADMIN") {
+      alert("Admins cannot add items to cart. Please use a customer account to purchase.");
+      return;
+    }
+
+    if (!isLoggedIn) {
+      // Save current page URL to redirect back after login
+      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+      router.push("/login");
+      return;
+    }
+
+    await action();
   }
 
-  // ⬅️ নতুন — Buy It Now
-  async function handleBuyNow() {
-    try {
-      setBuying(true);
-
-      for (let i = 0; i < quantity; i++) {
-        await addToCart(product.id);
+  async function handleAddToCart() {
+    await checkAuthAndProceed(async () => {
+      try {
+        setAdding(true);
+        for (let i = 0; i < quantity; i++) {
+          await addToCart(product.id);
+        }
+        window.dispatchEvent(new Event("cart-updated"));
+        alert("Product added to cart");
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Failed to add to cart");
+      } finally {
+        setAdding(false);
       }
+    });
+  }
 
-      router.push("/checkout");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed");
-    } finally {
-      setBuying(false);
-    }
+  async function handleBuyNow() {
+    await checkAuthAndProceed(async () => {
+      try {
+        setBuying(true);
+        for (let i = 0; i < quantity; i++) {
+          await addToCart(product.id);
+        }
+        router.push("/checkout");
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Failed");
+      } finally {
+        setBuying(false);
+      }
+    });
   }
 
   const discountPercentage =
     product.oldPrice && product.oldPrice > product.price
       ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
       : 0;
+
+  // Show loading while checking auth
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)]">
+        <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 md:py-8 lg:px-8 lg:py-10">
+          <div className="flex min-h-[400px] items-center justify-center">
+            <div className="text-center">
+              <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#c99500] border-t-transparent mx-auto"></div>
+              <p className="text-sm text-[#7a6641]">Loading product details...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Calculate if buttons should be disabled
+  const isDisabled = adding || buying || product.stock <= 0 || userRole === "ADMIN";
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)]">
@@ -132,7 +210,9 @@ export default function ProductDetailsClient({ data }: Props) {
         </div>
 
         <section className="grid gap-6 lg:grid-cols-[1.03fr_0.97fr] xl:gap-10">
+          {/* Left Side: Images */}
           <div className="grid gap-4 lg:grid-cols-[96px_1fr] xl:grid-cols-[110px_1fr]">
+            {/* Thumbnails */}
             <div className="order-2 flex gap-3 overflow-x-auto pb-1 lg:order-1 lg:flex-col lg:overflow-visible lg:pb-0">
               {images.map((img, index) => (
                 <button
@@ -154,6 +234,7 @@ export default function ProductDetailsClient({ data }: Props) {
               ))}
             </div>
 
+            {/* Main Image Display */}
             <div className="order-1 overflow-hidden rounded-[28px] border border-[#eadfca] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.06)] lg:order-2">
               <div className="relative">
                 <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2">
@@ -197,6 +278,7 @@ export default function ProductDetailsClient({ data }: Props) {
             </div>
           </div>
 
+          {/* Right Side: Details */}
           <div className="rounded-[28px] border border-[#eadfca] bg-white p-5 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:p-6 lg:p-7 xl:p-8">
             <p className="text-[11px] uppercase tracking-[0.3em] text-[#a87400]">
               Elite Jersey Land
@@ -307,7 +389,7 @@ export default function ProductDetailsClient({ data }: Props) {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={adding || product.stock <= 0}
+                  disabled={isDisabled}
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#2b2112] px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag size={17} />
@@ -318,11 +400,24 @@ export default function ProductDetailsClient({ data }: Props) {
               <button
                 type="button"
                 onClick={handleBuyNow}
-                disabled={buying || product.stock <= 0}
+                disabled={isDisabled}
                 className="mt-3 w-full rounded-2xl bg-[linear-gradient(135deg,#c99500,#e0b22c)] px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-white shadow-[0_12px_26px_rgba(201,149,0,0.18)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {buying ? "Processing..." : "Buy It Now"}
               </button>
+
+              {/* Updated Login/Admin Messages */}
+              {!isLoggedIn && userRole !== "ADMIN" && (
+                <p className="mt-3 text-center text-xs text-[#a87400]">
+                  Please <Link href="/login" className="font-semibold underline hover:no-underline">login</Link> to add items to cart
+                </p>
+              )}
+              
+              {userRole === "ADMIN" && (
+                <p className="mt-3 text-center text-xs font-medium text-red-500">
+                  You are logged in as Admin. Customers can only purchase items.
+                </p>
+              )}
             </div>
 
             <div className="mt-7 border-t border-[#efe4d1] pt-6">

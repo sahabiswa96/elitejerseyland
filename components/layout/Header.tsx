@@ -355,7 +355,7 @@ export default function Header() {
     >
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="hidden h-[88px] items-center justify-between md:flex">
-                     <Link href="/" className="flex items-center gap-4 mr-auto">
+          <Link href="/" className="flex items-center gap-4 mr-auto">
             <img
               src="/logo.jpeg"
               alt="Elite Jersey Land"
@@ -410,7 +410,7 @@ export default function Header() {
                     <Link
                       key={item.slug}
                       href={`/catalog/subcategory/${item.slug}`}
-                      className="block rounded-xl px-3 py-3 text-sm font-medium text-[#2b2112] transition hover:bg-white/70 hover:text-[#a87400]"
+                      className="block rounded-xl px-3 py-3 text-sm font-medium text-[#2b2112] transition hover:bg-white/70 hover:text-[#d1a00d]"
                     >
                       {item.label}
                     </Link>
@@ -464,6 +464,7 @@ export default function Header() {
                 Loading...
               </div>
             ) : user && user.role === "CUSTOMER" ? (
+              // CUSTOMER dropdown menu
               <div className="relative" ref={accountRef}>
                 <button
                   type="button"
@@ -530,26 +531,94 @@ export default function Header() {
                   </div>
                 ) : null}
               </div>
+            ) : user && user.role === "ADMIN" ? (
+              // ADMIN dropdown - no cart, different options
+              <div className="relative" ref={accountRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((prev) => !prev)}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#ece6d8] bg-[#f8f6f1] px-4 py-2 text-sm text-[#5f5f66] transition hover:text-[#a87400]"
+                >
+                  <UserRound size={16} />
+                  <span className="max-w-[120px] truncate">
+                    Admin: {customerName || "Admin"}
+                  </span>
+                </button>
+
+                {accountOpen ? (
+                  <div
+                    className={`absolute right-0 top-full z-50 mt-3 w-[240px] rounded-[20px] p-3 ${glassCard}`}
+                  >
+                    <div className="mb-2 rounded-xl bg-white/70 px-3 py-3">
+                      <p className="text-sm font-semibold text-[#2b2112]">
+                        {customerName || "Admin"}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-[#7a6641]">
+                        {user.email}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[#c99500]">
+                        Administrator
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Link
+                        href="/admin/dashboard"
+                        onClick={() => setAccountOpen(false)}
+                        className="block rounded-xl px-3 py-3 text-sm font-medium text-[#2b2112] transition hover:bg-white/70 hover:text-[#a87400]"
+                      >
+                        Admin Dashboard
+                      </Link>
+                      <Link
+                        href="/admin/products"
+                        onClick={() => setAccountOpen(false)}
+                        className="block rounded-xl px-3 py-3 text-sm font-medium text-[#2b2112] transition hover:bg-white/70 hover:text-[#a87400]"
+                      >
+                        Manage Products
+                      </Link>
+                      <Link
+                        href="/admin/orders"
+                        onClick={() => setAccountOpen(false)}
+                        className="block rounded-xl px-3 py-3 text-sm font-medium text-[#2b2112] transition hover:bg-white/70 hover:text-[#a87400]"
+                      >
+                        Manage Orders
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                        className="block w-full rounded-xl px-3 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50/80 disabled:opacity-70"
+                      >
+                        {loggingOut ? "Logging out..." : "Logout"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             ) : (
-              <Link
-                href="/login"
+              // Guest user - Show Login button
+              <button
+                onClick={() => router.push("/login")}
                 className="rounded-full border border-[#ece6d8] bg-[#f8f6f1] px-5 py-2.5 text-sm font-medium text-[#5f5f66] transition hover:text-[#a87400]"
               >
                 Login
-              </Link>
+              </button>
             )}
 
-            <Link
-              href="/cart"
-              className="relative rounded-full bg-[linear-gradient(135deg,#c99500,#e0b22c)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(201,149,0,0.15)] transition hover:opacity-90"
-            >
-              Cart
-              {cartCount > 0 ? (
-                <span className="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full border-2 border-white bg-[#2b2112] px-1 text-xs font-bold text-white">
-                  {cartCount}
-                </span>
-              ) : null}
-            </Link>
+            {/* Only show cart for CUSTOMER role */}
+            {(!user || user.role === "CUSTOMER") && (
+              <Link
+                href="/cart"
+                className="relative rounded-full bg-[linear-gradient(135deg,#c99500,#e0b22c)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(201,149,0,0.15)] transition hover:opacity-90"
+              >
+                Cart
+                {cartCount > 0 ? (
+                  <span className="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full border-2 border-white bg-[#2b2112] px-1 text-xs font-bold text-white">
+                    {cartCount}
+                  </span>
+                ) : null}
+              </Link>
+            )}
           </div>
         </div>
 
@@ -598,15 +667,13 @@ export default function Header() {
             <button
               type="button"
               onClick={() => {
-                if (!user) {
-                  router.push("/login");
-                  return;
-                }
-                if (user.role === "ADMIN") {
+                if (user?.role === "ADMIN") {
                   router.push("/admin/dashboard");
-                  return;
+                } else if (user?.role === "CUSTOMER") {
+                  setMobileAccountOpen((prev) => !prev);
+                } else {
+                  router.push("/login");
                 }
-                setMobileAccountOpen((prev) => !prev);
               }}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#2b2112] transition hover:bg-white/70"
               aria-label="Profile"
@@ -614,18 +681,21 @@ export default function Header() {
               <UserRound size={18} strokeWidth={2.2} />
             </button>
 
-            <Link
-              href="/cart"
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[#2b2112] transition hover:bg-white/70"
-              aria-label="Cart"
-            >
-              <ShoppingBag size={18} strokeWidth={2.2} />
-              {cartCount > 0 ? (
-                <span className="absolute right-[2px] top-[1px] inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#2b2112] px-[4px] text-[9px] font-bold text-white">
-                  {cartCount}
-                </span>
-              ) : null}
-            </Link>
+            {/* Only show cart for CUSTOMER role */}
+            {(!user || user.role === "CUSTOMER") && (
+              <Link
+                href="/cart"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[#2b2112] transition hover:bg-white/70"
+                aria-label="Cart"
+              >
+                <ShoppingBag size={18} strokeWidth={2.2} />
+                {cartCount > 0 ? (
+                  <span className="absolute right-[2px] top-[1px] inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#2b2112] px-[4px] text-[9px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                ) : null}
+              </Link>
+            )}
           </div>
         </div>
 
@@ -853,7 +923,7 @@ export default function Header() {
                           key={item.slug}
                           href={`/catalog/subcategory/${item.slug}`}
                           onClick={() => setMobileOpen(false)}
-                          className="block rounded-lg bg-white/70 px-3 py-2.5 text-sm font-medium text-[#2b2112] transition hover:text-[#a87400]"
+                          className="block rounded-lg bg-white/70 px-3 py-2.5 text-sm font-medium text-[#2b2112] transition hover:text-[#d1a00d]"
                         >
                           {item.label}
                         </Link>

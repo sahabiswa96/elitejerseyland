@@ -1,83 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { getProducts, deleteProduct } from "./actions";
 
 type AdminProduct = {
-  id: number;
+  id: string;
   name: string;
   slug: string;
-  team: string;
+  team: string | null;
   category: string;
-  subcategory: string;
+  subcategory: string | null;
   price: number;
-  oldPrice?: number;
-  stock: "In Stock" | "Out of Stock";
-  quality: string;
+  oldPrice: number | null;
+  stock: number;
+  quality: string | null;
 };
 
-const initialProducts: AdminProduct[] = [
-  {
-    id: 1,
-    name: "Argentina Home Jersey 24/25",
-    slug: "argentina-home-jersey-24-25",
-    team: "Argentina",
-    category: "National Teams",
-    subcategory: "Half Sleeve",
-    price: 999,
-    oldPrice: 1299,
-    stock: "In Stock",
-    quality: "Premium Quality",
-  },
-  {
-    id: 2,
-    name: "Real Madrid Away Jersey",
-    slug: "real-madrid-away-jersey",
-    team: "Real Madrid",
-    category: "Clubs",
-    subcategory: "Half Sleeve",
-    price: 1099,
-    oldPrice: 1399,
-    stock: "In Stock",
-    quality: "Premium Quality",
-  },
-  {
-    id: 3,
-    name: "Liverpool Full Sleeve Jersey",
-    slug: "liverpool-full-sleeve-jersey",
-    team: "Liverpool",
-    category: "Full Sleeve",
-    subcategory: "Full Sleeve",
-    price: 1149,
-    oldPrice: 1499,
-    stock: "Out of Stock",
-    quality: "Premium Quality",
-  },
-];
-
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<AdminProduct[]>(initialProducts);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const filteredProducts = useMemo(() => {
+  // Fetch products on load
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
+    };
+    loadProducts();
+  }, []);
+
+  const filteredProducts = products.filter((product) => {
     const q = search.toLowerCase().trim();
-    if (!q) return products;
-
-    return products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(q) ||
-        product.slug.toLowerCase().includes(q) ||
-        product.team.toLowerCase().includes(q) ||
-        product.category.toLowerCase().includes(q)
+    if (!q) return true;
+    return (
+      product.name.toLowerCase().includes(q) ||
+      product.slug.toLowerCase().includes(q) ||
+      (product.team && product.team.toLowerCase().includes(q)) ||
+      product.category.toLowerCase().includes(q)
     );
-  }, [products, search]);
+  });
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string) => {
     const ok = window.confirm("Are you sure you want to delete this product?");
     if (!ok) return;
 
-    setProducts((prev) => prev.filter((product) => product.id !== id));
+    const result = await deleteProduct(id);
+    if (result.success) {
+      // Remove from local state immediately for better UX
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      alert("Failed to delete product");
+    }
   };
+
+  if (loading) return <div className="p-10 text-center">Loading products...</div>;
 
   return (
     <div className="space-y-6">
@@ -137,24 +116,24 @@ export default function AdminProductsPage() {
                 >
                   <td className="px-3 py-4 font-semibold">{product.name}</td>
                   <td className="px-3 py-4">{product.slug}</td>
-                  <td className="px-3 py-4">{product.team}</td>
+                  <td className="px-3 py-4">{product.team || "-"}</td>
                   <td className="px-3 py-4">{product.category}</td>
-                  <td className="px-3 py-4">{product.subcategory}</td>
+                  <td className="px-3 py-4">{product.subcategory || "-"}</td>
                   <td className="px-3 py-4 font-semibold text-[#c99500]">
                     ₹{product.price}
                   </td>
                   <td className="px-3 py-4">
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                        product.stock === "In Stock"
+                        product.stock > 0
                           ? "bg-green-50 text-green-700"
                           : "bg-red-50 text-red-600"
                       }`}
                     >
-                      {product.stock}
+                      {product.stock > 0 ? "In Stock" : "Out of Stock"}
                     </span>
                   </td>
-                  <td className="px-3 py-4">{product.quality}</td>
+                  <td className="px-3 py-4">{product.quality || "-"}</td>
                   <td className="px-3 py-4">
                     <div className="flex gap-2">
                       <Link
